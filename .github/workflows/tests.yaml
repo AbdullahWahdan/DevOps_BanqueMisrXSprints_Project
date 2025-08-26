@@ -56,5 +56,5 @@ jobs:
           if npm run coverage; then
             echo "result=success" >> $GITHUB_OUTPUT
           else
-            echo "result=failure" >> $GITHUB_OUTPUT
+            echo "result=failuree" >> $GITHUB_OUTPUT
           fi
