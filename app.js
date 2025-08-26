@@ -18,6 +18,11 @@ app.use(cors());
 client.collectDefaultMetrics();
 
 
+// Debug: Log environment variables (without exposing sensitive data)
+console.log("MONGO_URI:", process.env.MONGO_URI ? "SET" : "NOT SET");
+console.log("MONGO_USERNAME:", process.env.MONGO_USERNAME ? "SET" : "NOT SET");
+console.log("MONGO_PASSWORD:", process.env.MONGO_PASSWORD ? "SET" : "NOT SET");
+
 mongoose.connect(process.env.MONGO_URI, {
     user: process.env.MONGO_USERNAME,
     pass: process.env.MONGO_PASSWORD,

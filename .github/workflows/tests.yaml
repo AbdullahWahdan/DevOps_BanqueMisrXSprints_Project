@@ -28,6 +28,11 @@ jobs:
       - run: npm install
       - id: test_step
         run: |
+          # Debug: Check if environment variables are set
+          echo "MONGO_URI: $MONGO_URI"
+          echo "MONGO_USERNAME: $MONGO_USERNAME"
+          echo "MONGO_PASSWORD: $MONGO_PASSWORD"
+          
           if npm test; then
             echo "result=success" >> $GITHUB_OUTPUT
           else
