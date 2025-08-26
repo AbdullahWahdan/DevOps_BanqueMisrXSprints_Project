@@ -3,13 +3,20 @@ const express = require('express');
 const OS = require('os');
 const bodyParser = require('body-parser');
 const mongoose = require("mongoose");
+const cors = require('cors');
+const client = require('prom-client');   // add Prometheus
+const axios = require('axios');          // add crible
+
 const app = express();
-const cors = require('cors')
 
 
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '/')));
-app.use(cors())
+app.use(cors());
+
+// ====== Prometheus Metrics ======
+client.collectDefaultMetrics();
+
 
 mongoose.connect(process.env.MONGO_URI, {
     user: process.env.MONGO_USERNAME,
@@ -18,14 +25,15 @@ mongoose.connect(process.env.MONGO_URI, {
     useUnifiedTopology: true
 }, function(err) {
     if (err) {
-        console.log("error!! " + err)
+        console.log("MongoDB error!! " + err)
+        sendToCribl({ level: "error", msg: "MongoDB connection failed", error: err.toString() });
     } else {
-      //  console.log("MongoDB Connection Successful")
+        console.log("MongoDB Connection Successful")
+        sendToCribl({ level: "info", msg: "MongoDB connected successfully" });
     }
-})
+});
 
 var Schema = mongoose.Schema;
-
 var dataSchema = new Schema({
     name: String,
     id: Number,
@@ -37,51 +45,55 @@ var dataSchema = new Schema({
 var planetModel = mongoose.model('planets', dataSchema);
 
 
-
-app.post('/planet',   function(req, res) {
-   // console.log("Received Planet ID " + req.body.id)
-    planetModel.findOne({
-        id: req.body.id
-    }, function(err, planetData) {
+app.post('/planet', function(req, res) {
+    planetModel.findOne({ id: req.body.id }, function(err, planetData) {
         if (err) {
-            alert("Ooops, We only have 9 planets and a sun. Select a number from 0 - 9")
-            res.send("Error in Planet Data")
+            sendToCribl({ level: "error", msg: "Planet lookup failed", error: err.toString() });
+            res.status(500).send("Error in Planet Data");
         } else {
+            sendToCribl({ level: "info", msg: "Planet data retrieved", planetId: req.body.id });
             res.send(planetData);
         }
-    })
-})
+    });
+});
 
-app.get('/',   async (req, res) => {
+app.get('/', async (req, res) => {
     res.sendFile(path.join(__dirname, '/', 'index.html'));
 });
 
-
-app.get('/os',   function(req, res) {
+app.get('/os', function(req, res) {
     res.setHeader('Content-Type', 'application/json');
     res.send({
         "os": OS.hostname(),
         "env": process.env.NODE_ENV
     });
-})
+});
 
-app.get('/live',   function(req, res) {
-    res.setHeader('Content-Type', 'application/json');
-    res.send({
-        "status": "live"
-    });
-})
+app.get('/live', function(req, res) {
+    res.json({ "status": "live" });
+});
 
-app.get('/ready',   function(req, res) {
-    res.setHeader('Content-Type', 'application/json');
-    res.send({
-        "status": "ready"
-    });
-})
+app.get('/ready', function(req, res) {
+    res.json({ "status": "ready" });
+});
+
+// ====== Prometheus Metrics Endpoint ======
+app.get('/metrics', async (req, res) => {
+    res.set('Content-Type', client.register.contentType);
+    res.end(await client.register.metrics());
+});
+
+// ====== Cribl Logger Function ======
+function sendToCribl(log) {
+    if (!process.env.CRIBL_URL) return; 
+    axios.post(process.env.CRIBL_URL, log)
+        .catch(err => console.error("Cribl logging failed: " + err));
+}
+
 
 app.listen(3000, () => {
-    console.log("Server successfully running on port - " +3000);
-})
-
+    console.log("Server successfully running on port - " + 3000);
+    sendToCribl({ level: "info", msg: "Server started", port: 3000 });
+});
 
 module.exports = app;

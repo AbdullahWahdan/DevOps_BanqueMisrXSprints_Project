@@ -32,7 +32,7 @@ jobs:
         
         - name: Terraform Plan
           run: terraform plan
-          working-directory: ./Terraform
+          working-directory: ./Terraformc
         
         - name: terraform Apply
           run: terraaform apply -auto-approve
@@ -42,6 +42,7 @@ jobs:
           # if [ "${{github.event.inputs.destroy}}" = "yes"]; then
            #terraform destroy -auto-approve
            #else
-            #terraform apply -auto-approve
+
+            #terraform apply -auto-approvcce
            #fi
           #working-directory: ./Terraform
