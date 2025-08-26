@@ -17,7 +17,6 @@ jobs:
     env:
         MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
         MONGO_USERNAME: ${{ vars.MONGO_USERNAME }}
-        MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
     outputs:
       result: ${{ steps.test_step.outputs.result }}
     steps:
@@ -27,11 +26,23 @@ jobs:
           node-version: 18
       - run: npm install
       - id: test_step
+        env:
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
         run: |
           # Debug: Check if environment variables are set
           echo "MONGO_URI: $MONGO_URI"
           echo "MONGO_USERNAME: $MONGO_USERNAME"
           echo "MONGO_PASSWORD: $MONGO_PASSWORD"
+          echo "MONGO_PASSWORD length: ${#MONGO_PASSWORD}"
+          echo "MONGO_PASSWORD is empty: $([ -z "$MONGO_PASSWORD" ] && echo "YES" || echo "NO")"
+          
+          # Debug: Check if the secret is being passed correctly
+          echo "Testing secret access:"
+          if [ -n "${{ secrets.MONGO_PASSWORD }}" ]; then
+            echo "Secret MONGO_PASSWORD is set (length: ${#MONGO_PASSWORD})"
+          else
+            echo "Secret MONGO_PASSWORD is NOT set"
+          fi
           
           if npm test; then
             echo "result=success" >> $GITHUB_OUTPUT

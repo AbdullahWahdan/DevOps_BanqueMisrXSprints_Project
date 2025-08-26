@@ -20,7 +20,6 @@ jobs:
     env:
         MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
         MONGO_USERNAME: ${{ vars.MONGO_USERNAME }}
-        MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
     outputs:
       image: ${{ steps.meta.outputs.tag }}
     steps:
@@ -34,6 +33,8 @@ jobs:
         run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - uses: docker/build-push-action@v4
+        env:
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
         with:
           push: true
           tags: ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
