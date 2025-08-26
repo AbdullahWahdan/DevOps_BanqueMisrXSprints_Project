@@ -1,0 +1,34 @@
+name: CD - Terraform
+
+on:
+  workflow_call:
+    inputs:
+      image-tag:
+        required: true
+        type: string
+    outputs:
+      infra-status:
+        description: "Terraform apply result"
+        value: ${{ jobs.terraform.outputs.status }}
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.tf_step.outputs.result }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.1.7
+
+      - id: tf_step
+        run: |
+          terraform init
+          if terraform apply -auto-approve; then
+            echo "result=success" >> $GITHUB_OUTPUT
+          else
+            echo "result=failure" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+        working-directory: ./Terraform/team-01

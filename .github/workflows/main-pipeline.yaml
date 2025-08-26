@@ -1,0 +1,32 @@
+name: Solar System - Main Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - feature_brancheA
+
+jobs:
+  run-tests:
+    uses: ./.github/workflows/tests.yaml
+
+  build-docker:
+    needs: run-tests
+    uses: ./.github/workflows/docker.yaml
+    with:
+      test-result: ${{ needs.run-tests.outputs.test-result }}
+      coverage-result: ${{ needs.run-tests.outputs.coverage-result }}
+
+  terraform-deploy:
+    needs: build-docker
+    uses: ./.github/workflows/terraform.yaml
+    with:
+      image-tag: ${{ needs.build-docker.outputs.image-tag }}
+
+  eks-deploy:
+    needs: terraform-deploy
+    uses: ./.github/workflows/deploy.yaml
+    with:
+      infra-status: ${{ needs.terraform-deploy.outputs.infra-status }}
+      image-tag: ${{ needs.build-docker.outputs.image-tag }}

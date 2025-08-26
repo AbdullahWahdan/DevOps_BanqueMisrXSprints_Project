@@ -1,0 +1,39 @@
+name: CD - Deploy to EKS
+
+on:
+  workflow_call:
+    inputs:
+      infra-status:
+        required: true
+        type: string
+      image-tag:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    if: ${{ inputs.infra-status == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - run: aws eks --region us-east-1 update-kubeconfig --name sprints-cluster-0
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.14.4
+
+      - run: |
+          helm upgrade --install solar-system ./helm \
+            --namespace default \
+            --set image.repository=${{ vars.DOCKER_USERNAME }}/solar-system \
+            --set image.tag=${{ inputs.image-tag }} \
+            --set service.type=LoadBalancer \
+            --set env.MONGO_URI="${{ secrets.MONGO_URI }}" \
+            --set env.MONGO_USERNAME="${{ secrets.MONGO_USERNAME }}" \
+            --set env.MONGO_PASSWORD="${{ secrets.MONGO_PASSWORD }}"

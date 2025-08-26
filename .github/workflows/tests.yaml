@@ -1,0 +1,51 @@
+name: CI - Tests
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    outputs:
+      test-result:
+        description: "Test results"
+        value: ${{ jobs.unit_testing.outputs.result }}
+      coverage-result:
+        description: "Coverage report"
+        value: ${{ jobs.code-coverage.outputs.result }}
+
+jobs:
+  unit_testing:
+    runs-on: ubuntu-latest
+    outputs:
+      result: ${{ steps.test_step.outputs.result }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: npm install
+      - id: test_step
+        run: |
+          if npm test; then
+            echo "result=success" >> $GITHUB_OUTPUT
+          else
+            echo "result=failure" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+  code-coverage:
+    needs: unit_testing
+    runs-on: ubuntu-latest
+    outputs:
+      result: ${{ steps.coverage_step.outputs.result }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: npm install
+      - id: coverage_step
+        run: |
+          if npm run coverage; then
+            echo "result=success" >> $GITHUB_OUTPUT
+          else
+            echo "result=failure" >> $GITHUB_OUTPUT
+          fi
