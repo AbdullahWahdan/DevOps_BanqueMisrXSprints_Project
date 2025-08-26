@@ -43,6 +43,6 @@ jobs:
            #terraform destroy -auto-approve
            #else
 
-            #terraform apply -auto-approvcce
+            #terraform apply -autox-approvcce
            #fi
           #working-directory: ./Terraform
