@@ -130,20 +130,20 @@ jobs:
         - name: Checkout Repo
           uses: actions/checkout@v5
     
-        # Install Trivy
+
         - name: Install Trivy
           uses: aquasecurity/trivy-action@0.20.0
     
-        # 1. Scan Docker Image
+
         - name: Scan Docker Image for Vulnerabilities
           uses: aquasecurity/trivy-action@0.20.0
           with:
             image-ref: ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
             format: 'table'
-            exit-code: '1'   # fail pipeline if high/critical vulns are found
+            exit-code: '1'   
             ignore-unfixed: true
     
-        # 2. Scan Terraform for Misconfigurations
+
         - name: Scan Terraform files
           uses: aquasecurity/trivy-action@0.20.0
           with:
@@ -154,14 +154,15 @@ jobs:
             ignore-unfixed: true
             scan-ref: ./Terraform
     
-        # 3. Scan Source Code for Secrets
+
         - name: Scan Source Code for Secrets
           uses: aquasecurity/trivy-action@0.20.0
           with:
             scan-type: 'fs'
             format: 'table'
-            exit-code: '0'   # just warn, don’t break pipeline
+            exit-code: '0'   
             severity: 'HIGH,CRITICAL'
+            
        - name: Save Trivy Report
           if: always()
           uses: actions/upload-artifact@v4.6.2
